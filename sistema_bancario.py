@@ -2,6 +2,26 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 import textwrap
 
+class ContaIterador:
+    def __init__(self, contas):
+        self.contas = contas
+        self.contador = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            conta = self.contas[self.contador]
+            self.contador += 1
+            return f"""\
+            Agência:\t{conta._agencia}
+            Número:\t{conta._numero}
+            Titular:\t{conta._cliente.nome}
+            Saldo:\tR$ {conta._saldo:.2f}
+        """
+        except IndexError:
+            raise StopIteration
 
 class Cliente():
     def __init__(self, endereco):
@@ -112,6 +132,11 @@ class Historico:
                 "data": datetime.now().strftime("%d-%m-%Y %H:%M:%s"),
             }
         )
+    
+    def gerar_relatorio(self, tipo_transacao=None):
+        for transacao in self._transacoes:
+            if tipo_transacao is None or transacao["tipo"].lower() == tipo_transacao.lower():
+                yield transacao
 
 class Saque(Transacao):
     def __init__(self, valor):
@@ -140,6 +165,15 @@ class Deposito(Transacao):
 
         if sucesso_transacao:
             conta.historico.adicionar_transacao(self)
+
+def log_transacao(func):
+    def envelope(*args, **kwargs):
+        func(*args, **kwargs)
+        dataHora = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        log = print(f"\n[{dataHora}] Transação: {func.__name__.upper()}")
+        return log
+    
+    return envelope
 def menu():
     menu = """\n
     ================ MENU ================
@@ -167,7 +201,7 @@ def recuperar_conta_cliente(cliente):
     # FIXME: não permite cliente escolher a conta
     return cliente.contas[0]
 
-
+@log_transacao
 def depositar(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -185,7 +219,7 @@ def depositar(clientes):
 
     cliente.realizar_transacao(conta, transacao)
 
-
+@log_transacao
 def sacar(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -203,7 +237,7 @@ def sacar(clientes):
 
     cliente.realizar_transacao(conta, transacao)
 
-
+@log_transacao
 def exibir_extrato(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -220,17 +254,19 @@ def exibir_extrato(clientes):
     transacoes = conta.historico.transacoes
 
     extrato = ""
-    if not transacoes:
+    tem_transacao = False
+    if tem_transacao:
         extrato = "Não foram realizadas movimentações."
     else:
-        for transacao in transacoes:
+        for transacao in conta.historico.gerar_relatorio(tipo_transacao="saque"):
+            tem_transacao = True
             extrato += f"\n{transacao['tipo']}:\n\tR$ {transacao['valor']:.2f}"
 
     print(extrato)
     print(f"\nSaldo:\n\tR$ {conta.saldo():.2f}")
     print("==========================================")
 
-
+@log_transacao
 def criar_cliente(clientes):
     cpf = input("Informe o CPF (somente número): ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -249,7 +285,7 @@ def criar_cliente(clientes):
 
     print("\n=== Cliente criado com sucesso! ===")
 
-
+@log_transacao
 def criar_conta(numero_conta, clientes, contas):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -266,9 +302,9 @@ def criar_conta(numero_conta, clientes, contas):
 
 
 def listar_contas(contas):
-    for conta in contas:
+    for conta in ContaIterador(contas):
         print("=" * 100)
-        print(textwrap.dedent(str(conta)))
+        print(conta)
 
 
 def main():
