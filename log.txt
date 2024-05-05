@@ -1,0 +1,5 @@
+[05-05-2024 14:00:22] Função: CRIAR_CLIENTE - Argumentos: ([<PessoaFisica: ('Joao da silva', '123')>],) - Retorno: None.
+[05-05-2024 14:00:23] Função: CRIAR_CONTA - Argumentos: (1, [<PessoaFisica: ('Joao da silva', '123')>], [<ContaCorrente: ('0001', '1', 'Joao da silva')>]) - Retorno: None.
+[05-05-2024 14:00:29] Função: DEPOSITAR - Argumentos: ([<PessoaFisica: ('Joao da silva', '123')>],) - Retorno: None.
+[05-05-2024 14:00:35] Função: EXIBIR_EXTRATO - Argumentos: ([<PessoaFisica: ('Joao da silva', '123')>],) - Retorno: None.
+[05-05-2024 14:00:48] Função: SACAR - Argumentos: ([<PessoaFisica: ('Joao da silva', '123')>],) - Retorno: None.
