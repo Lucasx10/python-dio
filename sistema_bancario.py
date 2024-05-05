@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 import textwrap
+from pathlib import Path
+
+ROOT_PATH = Path(__file__).parent
 
 class ContaIterador:
     def __init__(self, contas):
@@ -42,6 +45,9 @@ class PessoaFisica(Cliente):
         self.cpf = cpf
         self.data_nascimento = data_nascimento
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: ('{self.nome}', '{self.cpf}')>"
+
 class Conta:
     def __init__(self, numero, cliente):
         self._saldo = 0.0
@@ -52,6 +58,18 @@ class Conta:
 
     def saldo(self):
         return self._saldo
+    
+    @property
+    def numero(self):
+        return self._numero
+
+    @property
+    def agencia(self):
+        return self._agencia
+
+    @property
+    def cliente(self):
+        return self._cliente
     
     @property
     def historico(self):
@@ -99,6 +117,9 @@ class ContaCorrente(Conta):
             return super().sacar(valor)
         
         return False
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: ('{self.agencia}', '{self.numero}', '{self.cliente.nome}')>"
 
     def __str__(self):
         return f"""\
@@ -168,11 +189,14 @@ class Deposito(Transacao):
 
 def log_transacao(func):
     def envelope(*args, **kwargs):
-        func(*args, **kwargs)
+        retorno = func(*args, **kwargs)
         dataHora = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-        log = print(f"\n[{dataHora}] Transação: {func.__name__.upper()}")
-        return log
-    
+        try:
+            with open(ROOT_PATH / 'log.txt', 'a') as arquivo:
+                arquivo.write(f"[{dataHora}] Função: {func.__name__.upper()} - Argumentos: {args} - Retorno: {retorno}.\n")
+        except IOError as exc:
+            print(f"Erro ao abrir o arquivo {exc}")
+        return retorno
     return envelope
 def menu():
     menu = """\n
